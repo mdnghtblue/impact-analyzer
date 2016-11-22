@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+   <extension
+         point="org.eclipse.ui.commands">
+      <category
+            name="Main Category"
+            id="com.galbo.plugin.commands.category">
+      </category>
+      <command
+            name="Hello World"
+            categoryId="com.galbo.plugin.commands.category"
+            id="com.galbo.plugin.commands.sampleCommand">
+      </command>
+      <command
+            name="Simulate Commit"
+            categoryId="com.galbo.plugin.commands.category"
+            id="com.galbo.plugin.commands.commit">
+      </command>
+      <command
+            name="Impact Analysis"
+            categoryId="com.galbo.plugin.commands.category"
+            id="com.galbo.plugin.commands.impactAnalysis">
+      </command>
+   </extension>
+   <extension
+         point="org.eclipse.ui.handlers">
+      <handler
+            commandId="com.galbo.plugin.commands.sampleCommand"
+            class="com.galbo.plugin.handlers.SampleHandler">
+      </handler>
+      <handler
+            commandId="com.galbo.plugin.commands.impactAnalysis"
+            class="com.galbo.plugin.handlers.ImpactAnalysisHandler">
+      </handler>
+      <handler
+            commandId="com.galbo.plugin.commands.commit"
+            class="com.galbo.plugin.handlers.SCMHandler">
+      </handler>
+   </extension>
+   <extension
+         point="org.eclipse.ui.bindings">
+      <key
+            commandId="com.galbo.plugin.commands.sampleCommand"
+            contextId="org.eclipse.ui.contexts.window"
+            sequence="M1+6"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration">
+      </key>
+   </extension>
+   <extension
+         point="org.eclipse.ui.menus">
+      <menuContribution
+            locationURI="menu:org.eclipse.ui.main.menu?after=additions">
+         <menu
+               label="Impact Analysis"
+               mnemonic="I"
+               id="com.galbo.plugin.menus.sampleMenu">
+            <command
+                  commandId="com.galbo.plugin.commands.commit"
+                  mnemonic="C"
+                  id="com.galbo.plugin.menus.commit">
+            </command>
+            <command
+                  commandId="com.galbo.plugin.commands.impactAnalysis"
+                  mnemonic="A"
+                  id="com.galbo.plugin.menus.analysis">
+            </command>
+         </menu>
+      </menuContribution>
+      <menuContribution
+            locationURI="toolbar:org.eclipse.ui.main.toolbar?after=additions">
+         <toolbar
+               id="com.galbo.plugin.toolbars.sampleToolbar">
+            <command
+                  commandId="com.galbo.plugin.commands.sampleCommand"
+                  icon="icons/sample.gif"
+                  tooltip="Say hello world"
+                  id="com.galbo.plugin.toolbars.sampleCommand">
+            </command>
+         </toolbar>
+      </menuContribution>
+       <menuContribution
+            locationURI="popup:org.eclipse.ui.popup.any?after=additions">
+         <command
+                  commandId="com.galbo.plugin.commands.impactAnalysis"
+                  icon="icons/sample.gif"
+                  tooltip="Say hello world"
+                  id="com.galbo.plugin.popups.impactAnalysis">
+            </command>
+      </menuContribution>
+   </extension>
+   
+</plugin>
