@@ -48,6 +48,12 @@
             schemeId="org.eclipse.ui.defaultAcceleratorConfiguration">
       </key>
    </extension>
+   <extension point="org.eclipse.ui.views">
+        <view id="org.eclipse.ui.articles.views.impactview"
+             name="Impact Analysis View"
+          class="com.galbo.plugin.view.ImpactAnalysisView"
+          icon="icons/sample.gif"/>
+	</extension>
    <extension
          point="org.eclipse.ui.menus">
       <menuContribution
@@ -89,6 +95,7 @@
                   id="com.galbo.plugin.popups.impactAnalysis">
             </command>
       </menuContribution>
+
    </extension>
    
 </plugin>

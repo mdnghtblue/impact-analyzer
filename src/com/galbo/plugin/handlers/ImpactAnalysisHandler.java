@@ -1,6 +1,8 @@
 package com.galbo.plugin.handlers;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.eclipse.core.commands.AbstractHandler;
@@ -14,6 +16,12 @@ import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.IBinding;
+import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.PlatformUI;
+
+import com.galbo.plugin.view.ImpactAnalysisView;
 
 import tracer.differencing.core.data.GlobalData;
 import tracer.differencing.core.diff.DiffVisitor;
@@ -22,6 +30,7 @@ import tracer.differencing.core.pairs.ProjectPair;
 /**
  * Diff/TS: A Tool for Fine-Grained Structural Change Analysis
  * http://ieeexplore.ieee.org/document/4656419/?part=1
+ * 
  * @author stephaniegalbo
  *
  */
@@ -35,7 +44,8 @@ public class ImpactAnalysisHandler extends AbstractHandler
 
 		// for each file, compare the files
 		IProject[] projects = ASTUtil.getProjects();
-		
+
+		List<ASTInfo> infoList = new ArrayList<ASTInfo>();
 		try
 		{
 			for (IProject project : projects)
@@ -43,10 +53,10 @@ public class ImpactAnalysisHandler extends AbstractHandler
 				System.out.println("project: " + project.getName());
 				IJavaProject javaProject = JavaCore.create(project);
 				IPackageFragment[] packages = javaProject.getPackageFragments();
-				
+
 				IJavaProject oldProject = ASTStore.getInstance().getProject(project.getName());
-				getEquality(oldProject, javaProject);
-				
+				// getEquality(oldProject, javaProject);
+
 				for (IPackageFragment frag : packages)
 				{
 					if (frag.getKind() == IPackageFragmentRoot.K_SOURCE)
@@ -55,17 +65,23 @@ public class ImpactAnalysisHandler extends AbstractHandler
 						{
 							System.out.println("==========================================");
 							String path = unit.getPath().toString();
-							//String oldSource = ASTStore.getInstance().getSource(path);
-							//String newSource = unit.getSource();
+							// String oldSource =
+							// ASTStore.getInstance().getSource(path);
+							// String newSource = unit.getSource();
 							CompilationUnit oldAST = ASTStore.getInstance().getAST(path);
 							CompilationUnit newAST = ASTUtil.createAST(unit);
 							ASTCompare.reset();
-							boolean isEqual = ASTCompare.equals(oldAST, newAST);
+							ASTCompare.traverse(oldAST.getRoot(), newAST.getRoot());
+							boolean isEqual = ASTCompare.isEqual();
 							System.out.println("Path: " + path + " (is the same: " + isEqual + ")");
-							Set<Integer> lineNumbers = convertLineNumbers(newAST, ASTCompare.getLinesModified());
-							System.out.println("lines modified: " + lineNumbers);
-							
-							//getEquality(ASTStore.getInstance().getUnit(path), unit);
+							// ASTCompare.printVarsModified();
+							ASTCompare.printBindings();
+							Set<IBinding> bindings = new HashSet<>();
+							bindings.addAll(ASTCompare.getBindings());
+							System.out.println("binding count: " + bindings.size());
+							ASTUtil.countReferences(newAST, ASTCompare.getBindings());
+							ASTInfo info = new ASTInfo(path, newAST, bindings);
+							infoList.add(info);
 						}
 					}
 				}
@@ -75,37 +91,80 @@ public class ImpactAnalysisHandler extends AbstractHandler
 			e.printStackTrace();
 		}
 
+		openView(infoList);
+
 		return null;
 	}
-	
+
+	private void openView(List<ASTInfo> astInfoList)
+	{
+		System.out.println("============Opening view...");
+		String viewID = "org.eclipse.ui.articles.views.impactview";
+
+		StringBuilder sb = new StringBuilder();
+		for (ASTInfo info : astInfoList)
+		{
+			System.out.println("analyzing info for: " + info.getName() + " (" + info.getBindings().size() + ")");
+			for (IBinding binding : info.getBindings())
+			{
+				BindingVisitor visitor = new BindingVisitor(binding);
+				info.getNode().accept(visitor);
+				System.out.println("visiting binding: " + binding.getName());
+				
+				sb.append(" - ");
+				sb.append(binding.getName());
+				sb.append(" (");
+				sb.append(visitor.getCount());
+				sb.append(" reference(s) found)\n");
+				
+				sb.append(visitor.getReferences());
+				sb.append("\n");
+			}
+		}
+
+		try
+		{
+			IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
+
+			ImpactAnalysisView viewPart = (ImpactAnalysisView) page.findView(viewID);
+			viewPart.updateLabel(sb.toString());
+			System.out.println("label text: \n\n" + sb.toString());
+			page.showView(viewID);
+		} catch (PartInitException e)
+		{
+			e.printStackTrace();
+		}
+	}
+
 	private Set<Integer> convertLineNumbers(CompilationUnit cu, Set<Integer> lineNumbers)
 	{
 		Set<Integer> convertedNumbers = new HashSet<>();
-		
+
 		for (Integer num : lineNumbers)
 		{
 			System.out.println(num + " = " + cu.getLineNumber(num));
 			convertedNumbers.add(cu.getLineNumber(num));
 		}
-		
+
 		return convertedNumbers;
 	}
-	
+
 	private void getEquality(IJavaProject proj1, IJavaProject proj2)
 	{
+		System.out.println("=== Testing project equality ===");
 		GlobalData.data.clear();
 		GlobalData.atomicData.clear();
 		GlobalData.overridden_rel.clear();
-		
+
 		GlobalData.proj1 = proj1;
 		GlobalData.proj2 = proj2;
 
 		GlobalData.projNames.add(proj1.getElementName());
 		GlobalData.projNames.add(proj2.getElementName());
-		
-		//ComUnitPair pair = new ComUnitPair(unit1, unit2);
+
+		// ComUnitPair pair = new ComUnitPair(unit1, unit2);
 		ProjectPair pair = new ProjectPair(proj1, proj2);
-		
+
 		DiffVisitor visitor = new DiffVisitor();
 		try
 		{
@@ -117,13 +176,11 @@ public class ImpactAnalysisHandler extends AbstractHandler
 			System.out.println("match1: " + DiffVisitor.match1);
 			System.out.println("match2: " + DiffVisitor.match2);
 			System.out.println("deleted: " + DiffVisitor.deleted);
-		}
-		catch (JavaModelException e)
+		} catch (JavaModelException e)
 		{
 			e.printStackTrace();
 		}
-		
-	}
 
+	}
 
 }

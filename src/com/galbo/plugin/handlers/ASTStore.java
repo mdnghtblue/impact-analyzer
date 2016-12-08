@@ -62,11 +62,13 @@ public class ASTStore
 	
 	public void putProject(String key, IJavaProject source)
 	{
+		System.out.println("Saving project: " + key);
 		PROJECT_MAP.put(key, source);
 	}
 	
 	public IJavaProject getProject(String key)
 	{
+		System.out.println("Retrieving project: " + key);
 		return PROJECT_MAP.get(key);
 	}
 	

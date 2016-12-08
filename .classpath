@@ -4,5 +4,22 @@
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/FaultTracer-OOPSLA"/>
+	<classpathentry kind="lib" path="/Users/stephaniegalbo/Downloads/plugins/edu.ksu.cis.indus_0.8.3.14/lib/commons-cli.jar"/>
+	<classpathentry kind="lib" path="/Users/stephaniegalbo/Downloads/plugins/edu.ksu.cis.indus_0.8.3.14/lib/commons-io.jar"/>
+	<classpathentry kind="lib" path="/Users/stephaniegalbo/Downloads/plugins/edu.ksu.cis.indus_0.8.3.14/lib/commons-lang.jar"/>
+	<classpathentry kind="lib" path="/Users/stephaniegalbo/Downloads/plugins/edu.ksu.cis.indus_0.8.3.14/lib/commons-pool.jar"/>
+	<classpathentry kind="lib" path="/Users/stephaniegalbo/Downloads/plugins/edu.ksu.cis.indus_0.8.3.14/lib/indus.jar"/>
+	<classpathentry kind="lib" path="/Users/stephaniegalbo/Downloads/plugins/edu.ksu.cis.indus_0.8.3.14/lib/jasminclasses-sable-1.2.jar"/>
+	<classpathentry kind="lib" path="/Users/stephaniegalbo/Downloads/plugins/edu.ksu.cis.indus_0.8.3.14/lib/jibx-run.jar"/>
+	<classpathentry kind="lib" path="/Users/stephaniegalbo/Downloads/plugins/edu.ksu.cis.indus_0.8.3.14/lib/log4jconfig.jar"/>
+	<classpathentry kind="lib" path="/Users/stephaniegalbo/Downloads/plugins/edu.ksu.cis.indus_0.8.3.14/lib/polyglot-1.1.0.jar"/>
+	<classpathentry kind="lib" path="/Users/stephaniegalbo/Downloads/plugins/edu.ksu.cis.indus_0.8.3.14/lib/slf4j.jar"/>
+	<classpathentry kind="lib" path="/Users/stephaniegalbo/Downloads/plugins/edu.ksu.cis.indus_0.8.3.14/lib/slicer.jar"/>
+	<classpathentry kind="lib" path="/Users/stephaniegalbo/Downloads/plugins/edu.ksu.cis.indus_0.8.3.14/lib/soot-2.1.0-modified.jar"/>
+	<classpathentry kind="lib" path="/Users/stephaniegalbo/Downloads/plugins/edu.ksu.cis.indus_0.8.3.14/lib/staticanalyses.jar"/>
+	<classpathentry kind="lib" path="/Users/stephaniegalbo/Downloads/plugins/edu.ksu.cis.indus_0.8.3.14/lib/trove.jar"/>
+	<classpathentry kind="lib" path="/Users/stephaniegalbo/Downloads/plugins/edu.ksu.cis.indus_0.8.3.14/lib/xmlenc.jar"/>
+	<classpathentry kind="lib" path="/Users/stephaniegalbo/Downloads/plugins/edu.ksu.cis.indus_0.8.3.14/lib/xmlunit.jar"/>
+	<classpathentry kind="lib" path="/Users/stephaniegalbo/Downloads/plugins/edu.ksu.cis.indus_0.8.3.14/lib/xpp3.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
