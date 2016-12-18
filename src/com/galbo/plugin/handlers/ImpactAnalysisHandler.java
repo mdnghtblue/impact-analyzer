@@ -111,7 +111,7 @@ public class ImpactAnalysisHandler extends AbstractHandler
 				info.getNode().accept(visitor);
 				System.out.println("visiting binding: " + binding.getName());
 				
-				sb.append(" - ");
+				sb.append(" - Variable: ");
 				sb.append(binding.getName());
 				sb.append(" (");
 				sb.append(visitor.getCount());
@@ -134,19 +134,6 @@ public class ImpactAnalysisHandler extends AbstractHandler
 		{
 			e.printStackTrace();
 		}
-	}
-
-	private Set<Integer> convertLineNumbers(CompilationUnit cu, Set<Integer> lineNumbers)
-	{
-		Set<Integer> convertedNumbers = new HashSet<>();
-
-		for (Integer num : lineNumbers)
-		{
-			System.out.println(num + " = " + cu.getLineNumber(num));
-			convertedNumbers.add(cu.getLineNumber(num));
-		}
-
-		return convertedNumbers;
 	}
 
 	private void getEquality(IJavaProject proj1, IJavaProject proj2)

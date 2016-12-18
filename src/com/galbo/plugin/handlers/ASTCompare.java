@@ -8,7 +8,7 @@ import java.util.Set;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
-import org.eclipse.jdt.core.dom.MethodInvocation;
+import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.StructuralPropertyDescriptor;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
@@ -96,6 +96,13 @@ public class ASTCompare
 				MethodDeclaration obj = (MethodDeclaration) assignee;
 				bindings.add(obj.resolveBinding());
 			}
+			else if (assignee instanceof QualifiedName)
+			{
+				QualifiedName obj = (QualifiedName) assignee;
+				System.out.println("adding qualified var: " + obj.getName().getFullyQualifiedName() + "; binding: " + obj.resolveBinding());
+				varsModified.add(obj.getName());
+				bindings.add(obj.getName().resolveBinding());
+			}
 		}
 		
 		/*if (node instanceof NumberLiteral)
@@ -131,6 +138,11 @@ public class ASTCompare
 			Object rightVal = right.getStructuralProperty(property);
 			if (property.isSimpleProperty())
 			{
+				if (leftVal == null || rightVal == null)
+				{
+					continue;
+				}
+				
 				// check for simple properties (primitive types, Strings, ...)
 				// with normal equality
 				if (!leftVal.equals(rightVal))

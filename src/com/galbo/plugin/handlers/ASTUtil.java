@@ -40,7 +40,7 @@ public class ASTUtil
 
 	public static CompilationUnit createAST(ICompilationUnit unit) throws JavaModelException
 	{
-		System.out.println("Creating AST for " + unit.getPath());
+		//System.out.println("Creating AST for " + unit.getPath());
 		ASTParser parser = ASTParser.newParser(AST.JLS8);
 		parser.setSource(unit);
 		parser.setResolveBindings(true);
