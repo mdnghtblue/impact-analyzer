@@ -1,13 +1,17 @@
 package com.galbo.plugin.handlers;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
@@ -21,11 +25,17 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 
+import com.galbo.plugin.refs.ClassRef;
+import com.galbo.plugin.refs.MethodRef;
+import com.galbo.plugin.refs.ProjectRef;
+import com.galbo.plugin.refs.VariableRef;
+import com.galbo.plugin.util.ASTUtil;
+import com.galbo.plugin.util.PluginUtil;
 import com.galbo.plugin.view.ImpactAnalysisView;
-
-import tracer.differencing.core.data.GlobalData;
-import tracer.differencing.core.diff.DiffVisitor;
-import tracer.differencing.core.pairs.ProjectPair;
+import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
+import com.github.javaparser.ast.body.MethodDeclaration;
+import com.github.javaparser.ast.body.TypeDeclaration;
+import com.github.javaparser.ast.expr.SimpleName;
 
 /**
  * Diff/TS: A Tool for Fine-Grained Structural Change Analysis
@@ -45,6 +55,8 @@ public class ImpactAnalysisHandler extends AbstractHandler
 		// for each file, compare the files
 		IProject[] projects = ASTUtil.getProjects();
 
+		List<ParserStore> parserList = new ArrayList<ParserStore>();
+
 		List<ASTInfo> infoList = new ArrayList<ASTInfo>();
 		try
 		{
@@ -54,8 +66,8 @@ public class ImpactAnalysisHandler extends AbstractHandler
 				IJavaProject javaProject = JavaCore.create(project);
 				IPackageFragment[] packages = javaProject.getPackageFragments();
 
-				IJavaProject oldProject = ASTStore.getInstance().getProject(project.getName());
-				// getEquality(oldProject, javaProject);
+				ParserStore projectParser = new ParserStore(javaProject);
+				parserList.add(projectParser);
 
 				for (IPackageFragment frag : packages)
 				{
@@ -80,7 +92,8 @@ public class ImpactAnalysisHandler extends AbstractHandler
 							bindings.addAll(ASTCompare.getBindings());
 							System.out.println("binding count: " + bindings.size());
 							ASTUtil.countReferences(newAST, ASTCompare.getBindings());
-							ASTInfo info = new ASTInfo(path, newAST, bindings);
+
+							ASTInfo info = new ASTInfo(path, newAST, bindings, unit);
 							infoList.add(info);
 						}
 					}
@@ -91,16 +104,17 @@ public class ImpactAnalysisHandler extends AbstractHandler
 			e.printStackTrace();
 		}
 
-		openView(infoList);
+		openView(infoList, parserList);
 
 		return null;
 	}
 
-	private void openView(List<ASTInfo> astInfoList)
+	private void openView(List<ASTInfo> astInfoList, List<ParserStore> parserStore)
 	{
 		System.out.println("============Opening view...");
 		String viewID = "org.eclipse.ui.articles.views.impactview";
 
+		Map<String, ProjectRef> projectRefs = new HashMap<String, ProjectRef>();
 		StringBuilder sb = new StringBuilder();
 		for (ASTInfo info : astInfoList)
 		{
@@ -110,15 +124,24 @@ public class ImpactAnalysisHandler extends AbstractHandler
 				BindingVisitor visitor = new BindingVisitor(binding);
 				info.getNode().accept(visitor);
 				System.out.println("visiting binding: " + binding.getName());
-				
+
 				sb.append(" - Variable: ");
 				sb.append(binding.getName());
 				sb.append(" (");
 				sb.append(visitor.getCount());
 				sb.append(" reference(s) found)\n");
-				
-				sb.append(visitor.getReferences());
-				sb.append("\n");
+
+				System.out.println("====java parser====");
+				RefItem refItem = new RefItem();
+				System.out.println("IPATH: " + info.getUnit().getPath());
+				IFile file = PluginUtil.getIFile(info.getUnit().getPath());
+				System.out.println("IFILE: " + file);
+				refItem.setFile(file);
+				refItem.setProjectName(info.getUnit().getJavaProject().getElementName());
+				javaParser(parserStore, binding, refItem);
+				System.out.println("====end java parser====");
+
+				addVariableRef(projectRefs, binding.getName(), visitor.getCount(), refItem);
 			}
 		}
 
@@ -127,7 +150,8 @@ public class ImpactAnalysisHandler extends AbstractHandler
 			IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
 
 			ImpactAnalysisView viewPart = (ImpactAnalysisView) page.findView(viewID);
-			viewPart.updateLabel(sb.toString());
+			viewPart.updateView(projectRefs);
+
 			System.out.println("label text: \n\n" + sb.toString());
 			page.showView(viewID);
 		} catch (PartInitException e)
@@ -136,38 +160,84 @@ public class ImpactAnalysisHandler extends AbstractHandler
 		}
 	}
 
-	private void getEquality(IJavaProject proj1, IJavaProject proj2)
+	private void javaParser(List<ParserStore> storeList, IBinding binding, RefItem refItem)
 	{
-		System.out.println("=== Testing project equality ===");
-		GlobalData.data.clear();
-		GlobalData.atomicData.clear();
-		GlobalData.overridden_rel.clear();
-
-		GlobalData.proj1 = proj1;
-		GlobalData.proj2 = proj2;
-
-		GlobalData.projNames.add(proj1.getElementName());
-		GlobalData.projNames.add(proj2.getElementName());
-
-		// ComUnitPair pair = new ComUnitPair(unit1, unit2);
-		ProjectPair pair = new ProjectPair(proj1, proj2);
-
-		DiffVisitor visitor = new DiffVisitor();
 		try
 		{
-			pair.accept(visitor);
-			System.out.println("project names: " + GlobalData.projNames);
-			System.out.println("global data: " + GlobalData.data);
-			System.out.println("global atomic data: " + GlobalData.atomicData);
-			System.out.println("added: " + DiffVisitor.added);
-			System.out.println("match1: " + DiffVisitor.match1);
-			System.out.println("match2: " + DiffVisitor.match2);
-			System.out.println("deleted: " + DiffVisitor.deleted);
-		} catch (JavaModelException e)
+			System.out.println("binding: " + binding.getName());
+
+			for (ParserStore store : storeList)
+			{
+				for (com.github.javaparser.ast.CompilationUnit compUnit : store.getMap().values())
+				{
+					System.out.println("IPACKAGE: " + compUnit.getPackageDeclaration().get() + "; ");
+					compUnit.getNodesByType(SimpleName.class).stream()
+							.filter(f -> f.getIdentifier().contains(binding.getName())).forEach(f ->
+							{
+								if (f.getAncestorOfType(MethodDeclaration.class).isPresent())
+								{
+									String className = "";
+									if (f.getAncestorOfType(TypeDeclaration.class).isPresent())
+									{
+										TypeDeclaration typeDeclaration = f.getAncestorOfType(TypeDeclaration.class).get();
+										className = typeDeclaration.getNameAsString();
+									}
+									String methodName = f.getAncestorOfType(MethodDeclaration.class).get()
+											.getNameAsString();
+
+									IFile file = PluginUtil.getIFile(store.getPathMap().get(compUnit.toString()));
+									refItem.setFile(file);
+									refItem.addInfo(className, methodName);
+									
+									System.out.println("+++ class: " + className + "; method: " + methodName + " (id: "
+											+ f.getIdentifier() + ")");
+								}
+							});
+				}
+			}
+
+		} catch (Exception e)
 		{
 			e.printStackTrace();
 		}
-
 	}
 
+	private void addVariableRef(Map<String, ProjectRef> projectRefs, String varName, int refCount, RefItem refItem)
+	{
+		// add project if not added
+		if (!projectRefs.containsKey(refItem.getProjectName()))
+		{
+			projectRefs.put(refItem.getProjectName(), new ProjectRef(refItem.getProjectName()));
+		}
+
+		Map<String, ClassRef> classRefs = projectRefs.get(refItem.getProjectName()).getClassRefs();
+		
+		// add class if not added
+		classRefs.putAll(refItem.getClassNames());
+		
+		/*Map<String, MethodRef> methodRefs = classRefs.get(refItem.getClassName()).getMethodRefs();
+		
+		// add method if not added
+		if (!methodRefs.containsKey(refItem.getMethodName()))
+		{
+			methodRefs.put(refItem.getMethodName(), new MethodRef(refItem.getMethodName()));
+		}*/
+		
+		for (Entry<String, ClassRef> classEntry : classRefs.entrySet())
+		{
+			for (Entry<String, MethodRef> methodEntry : classEntry.getValue().getMethodRefs().entrySet())
+			{
+				Map<String, VariableRef> varRefs = methodEntry.getValue().getVariableRefs();
+				
+				// add variable if not added
+				if (!varRefs.containsKey(varName))
+				{
+					varRefs.put(varName, new VariableRef(varName, refCount));
+				}
+
+			}
+		}
+		
+		
+	}
 }

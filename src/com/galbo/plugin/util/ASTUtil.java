@@ -1,4 +1,4 @@
-package com.galbo.plugin.handlers;
+package com.galbo.plugin.util;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -158,7 +158,7 @@ public class ASTUtil
 		
 		while (!(node instanceof MethodDeclaration))
 		{
-			System.out.println("method node class: " + node.getClass());
+			//System.out.println("method node class: " + node.getClass());
 			node = node.getParent();
 			
 			if (node == null)
@@ -186,7 +186,7 @@ public class ASTUtil
 		
 		while (!(node instanceof TypeDeclaration))
 		{
-			System.out.println("type node class: " + node.getClass());
+			//System.out.println("type node class: " + node.getClass());
 			node = node.getParent();
 			
 			if (node == null)

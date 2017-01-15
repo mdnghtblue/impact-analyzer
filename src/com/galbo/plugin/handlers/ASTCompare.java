@@ -13,6 +13,8 @@ import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.StructuralPropertyDescriptor;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 
+import com.galbo.plugin.util.ASTUtil;
+
 public class ASTCompare
 {
 	private static final Set<Integer> IGNORED_NODES = new HashSet<>();

@@ -3,9 +3,12 @@ package com.galbo.plugin.handlers;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.SimpleName;
+
+import com.galbo.plugin.util.ASTUtil;
 
 public class BindingVisitor extends ASTVisitor
 {
@@ -21,7 +24,8 @@ public class BindingVisitor extends ASTVisitor
 	
 	public boolean visit(SimpleName node)
 	{
-		System.out.println("VISITING: " + node.getFullyQualifiedName());
+		System.out.println("VISITING: " + node.getFullyQualifiedName() + "; type: " + ASTNode.nodeClassForType(node.getNodeType()));
+		//System.out.println("  IDENTIFIER: " + node.getIdentifier());
 		if (node.resolveBinding().getKey().equals(binding.getKey()))
 		{
 			IBinding methodBinding = ASTUtil.getMethod(node);
@@ -40,7 +44,7 @@ public class BindingVisitor extends ASTVisitor
 			
 			methodsFound.add(methodBinding.getName());
 					
-			System.out.println("FOUND: " + binding.getJavaElement().getElementName() + " (" + binding.getKey() + ")");
+			System.out.println("FOUND: " + binding.getJavaElement().getElementName() + " (" + binding.getKey() + ")" + "; class: " + classBinding.getName() + "; method: " + methodBinding.getName());
 			refString.append("    ");
 			refString.append(classBinding.getName());
 			refString.append(".java - ");

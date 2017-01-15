@@ -12,6 +12,8 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 
+import com.galbo.plugin.util.ASTUtil;
+
 public class SCMHandler extends AbstractHandler
 {
 	@Override

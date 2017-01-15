@@ -2,6 +2,7 @@ package com.galbo.plugin.handlers;
 
 import java.util.Set;
 
+import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.IBinding;
 
@@ -10,12 +11,14 @@ public class ASTInfo
 	private String name;
 	private ASTNode node;
 	private Set<IBinding> bindings;
+	private ICompilationUnit unit;
 	
-	public ASTInfo(String nameInfo, ASTNode nodeInfo, Set<IBinding> bindingInfo)
+	public ASTInfo(String nameInfo, ASTNode nodeInfo, Set<IBinding> bindingInfo, ICompilationUnit cUnit)
 	{
 		name = nameInfo;
 		node = nodeInfo;
 		bindings = bindingInfo;
+		unit = cUnit;
 	}
 
 	public String getName()
@@ -47,4 +50,16 @@ public class ASTInfo
 	{
 		this.bindings = bindings;
 	}
+
+	public ICompilationUnit getUnit()
+	{
+		return unit;
+	}
+
+	public void setUnit(ICompilationUnit unit)
+	{
+		this.unit = unit;
+	}
+	
+	
 }
